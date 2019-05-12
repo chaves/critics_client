@@ -1,10 +1,18 @@
-import Vue from 'vue'
-import './plugins/vuetify'
-import './plugins/axios'
-import App from './App.vue'
+import Vue from "vue";
+import "./plugins/vuetify";
+import "./plugins/axios";
+import App from "./App.vue";
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
-new Vue({
-  render: h => h(App),
-}).$mount('#app')
+window.axios = require("axios");
+
+axios.defaults.baseURL = process.env.VUE_APP_API_URL;
+axios.defaults.headers.post["Content-Type"] = "application/json";
+
+import router from "./router/router.js";
+
+window.app = new Vue({
+  router,
+  render: h => h(App)
+}).$mount("#app");
