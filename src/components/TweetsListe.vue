@@ -13,7 +13,7 @@
               <v-expansion-panel popout v-model="panel">
                 <v-expansion-panel-content v-for="(tweet, id) in tweets" :key="id">
                   <div slot="header">{{ tweet.text }}</div>
-                </v-expansion-panel-content>
+                </v-expansion-panel-content>sdfsdfsdfsd
               </v-expansion-panel>
             </v-tab-item>
 
@@ -28,10 +28,13 @@
         </v-tabs>
       </v-flex>
     </v-layout>
+    <pagination-sources :pagination="pagination" :page="page" @newPage="page = $event"/>
   </v-container>
 </template>
 
 <script>
+import paginationSources from "./parts/paginationSources";
+
 export default {
   data: () => ({
     url: "tweets",
@@ -58,7 +61,9 @@ export default {
       console.log(data.data);
     },
     getAjax: function() {
-      window.axios.get(this.url).then(response => this.getData(response.data));
+      window.axios
+        .get(this.url + "?page=" + this.page)
+        .then(response => this.getData(response.data));
     }
   },
   watch: {
@@ -69,7 +74,9 @@ export default {
       this.getAjax();
     }
   },
-  components: {}
+  components: {
+    "pagination-sources": paginationSources
+  }
 };
 </script>
 
