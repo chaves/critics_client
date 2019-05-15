@@ -1,26 +1,126 @@
 <template>
   <v-container>
     <v-layout row wrap>
+      <v-flex xs4 offset-xs4>
+        <v-select :items="items" prepend-icon="face" v-model="owner"></v-select>
+      </v-flex>
+
       <v-flex>
         <v-tabs fixed-tabs>
           <v-tabs-slider></v-tabs-slider>
 
-          <v-tab :href="'#tab1'" :key="1">tweets to labelize</v-tab>
-          <v-tab :href="'#tab2'" :key="2">tweets done</v-tab>
+          <v-tab :href="'#tab1'" :key="1" @click="url = 'tweets'">tweets to labelize</v-tab>
+          <v-tab :href="'#tab2'" :key="2" @click="url = 'tweets/done'">tweets done</v-tab>
 
-          <v-tabs-items>
+          <v-tabs-items style="margin-top: 12px">
             <v-tab-item :value="'tab1'" :key="1">
-              <v-expansion-panel popout v-model="panel">
+              <v-expansion-panel inset>
                 <v-expansion-panel-content v-for="(tweet, id) in tweets" :key="id">
-                  <div slot="header">{{ tweet.text }}</div>
-                </v-expansion-panel-content>sdfsdfsdfsd
+                  <div slot="header">
+                    <v-layout row wrap>
+                      <v-flex xs8>
+                        <strong>{{ tweet.hashtag }}</strong> :
+                        <span :class="[tweet.ignore ? 'ignored' : '']">{{ tweet.text }}</span>
+                      </v-flex>
+                      <v-flex xs4>
+                        <span v-if="tweet.criticism === 'yes'">
+                          <v-btn depressed small color="red darken-2" dark>Criticism</v-btn>
+                        </span>
+                        <span v-else-if="tweet.criticism === 'no'">
+                          <v-btn depressed small color="green" dark>Not a criticism</v-btn>
+                        </span>
+                        <span v-if="tweet.constructive === 'yes'">
+                          <v-btn depressed small color="green" dark>Constructive</v-btn>
+                        </span>
+                        <span v-else-if="tweet.constructive === 'no'">
+                          <v-btn depressed small color="red darken-2" dark>Not constructive</v-btn>
+                        </span>
+                      </v-flex>
+                    </v-layout>
+                  </div>
+                  <v-card>
+                    <v-container fluid>
+                      <v-layout row wrap>
+                        <v-flex xs4>
+                          <v-radio-group
+                            v-model="tweet.criticism"
+                            row
+                            @click="s_criticism(tweet.id, tweet.criticism)"
+                          >
+                            Criticism : &nbsp;
+                            <v-radio label="yes" value="yes"></v-radio>
+                            <v-radio label="no" value="no"></v-radio>
+                          </v-radio-group>
+                        </v-flex>
+
+                        <v-flex xs4>
+                          <v-radio-group
+                            v-model="tweet.constructive"
+                            row
+                            @click="s_constructive(tweet.id, tweet.constructive)"
+                          >
+                            Constructive : &nbsp;
+                            <v-radio label="yes" value="yes"></v-radio>
+                            <v-radio label="no" value="no"></v-radio>
+                          </v-radio-group>
+                        </v-flex>
+
+                        <v-flex xs2>
+                          <v-switch
+                            :label="`Ignore`"
+                            v-model="tweet.ignore"
+                            @click.native="s_ignore(tweet.id)"
+                          ></v-switch>
+                        </v-flex>
+
+                        <v-flex xs1>
+                          <v-btn fab color="green" dark small @click.native="s_done(tweet.id, id)">
+                            <v-icon>done_all</v-icon>
+                          </v-btn>
+                        </v-flex>
+
+                        <v-flex xs1>
+                          <v-btn
+                            fab
+                            color="primary"
+                            dark
+                            small
+                            @click.native="link_to_tweet(tweet.screenName, tweet.tweet_id)"
+                          >
+                            <v-icon>link</v-icon>
+                          </v-btn>
+                        </v-flex>
+                      </v-layout>
+                    </v-container>
+                  </v-card>
+                </v-expansion-panel-content>
               </v-expansion-panel>
             </v-tab-item>
 
             <v-tab-item :value="'tab2'" :key="2">
               <v-expansion-panel inset>
                 <v-expansion-panel-content v-for="(tweet, id) in tweets" :key="id">
-                  <div slot="header">{{ tweet.text }}</div>
+                  <div slot="header">
+                    <v-layout row wrap>
+                      <v-flex xs8>
+                        <span :class="[tweet.ignore ? 'ignored' : '']">{{ tweet.text }}</span>
+                      </v-flex>
+                      <v-flex xs4>
+                        <span v-if="tweet.criticism === 'yes'">
+                          <v-btn depressed small color="red darken-2" dark>Criticism</v-btn>
+                        </span>
+                        <span v-else-if="tweet.criticism === 'no'">
+                          <v-btn depressed small color="green" dark>Not a criticism</v-btn>
+                        </span>
+                        <span v-if="tweet.constructive === 'yes'">
+                          <v-btn depressed small color="green" dark>Constructive</v-btn>
+                        </span>
+                        <span v-else-if="tweet.constructive === 'no'">
+                          <v-btn depressed small color="red darken-2" dark>Not constructive</v-btn>
+                        </span>
+                      </v-flex>
+                    </v-layout>
+                  </div>
                 </v-expansion-panel-content>
               </v-expansion-panel>
             </v-tab-item>
@@ -38,11 +138,13 @@ import paginationSources from "./parts/paginationSources";
 export default {
   data: () => ({
     url: "tweets",
+    owner: "All",
     tweets: [],
     regles: [],
     pagination: {},
     page: 1,
-    panel: []
+    row: null,
+    items: ["All", "Abir", "Bruno", "Svitlana", "Yifei"]
   }),
 
   mounted() {
@@ -58,12 +160,43 @@ export default {
       };
       this.pagination = pagination;
       this.tweets = data.data;
-      console.log(data.data);
     },
     getAjax: function() {
       window.axios
-        .get(this.url + "?page=" + this.page)
+        .get(this.url + "/" + this.owner.toLowerCase() + "?page=" + this.page)
         .then(response => this.getData(response.data));
+    },
+    s_criticism: function(id, value) {
+      window.axios
+        .post("tweets/update/criticism", { id: id, value: value })
+        .then()
+        .catch();
+    },
+    s_constructive: function(id, value) {
+      window.axios
+        .post("tweets/update/constructive", { id: id, value: value })
+        .then()
+        .catch();
+    },
+    s_ignore: function(id) {
+      window.axios
+        .post("tweets/update/ignore", { id: id })
+        .then()
+        .catch();
+    },
+    s_done: function(id, key) {
+      // this.$delete(this.tweets, id);
+      window.axios
+        .post("tweets/update/done", { id: id })
+        .then(this.$delete(this.tweets, key))
+        .catch();
+    },
+    link_to_tweet: function(screenName, tweet_id) {
+      let win = window.open(
+        "https://twitter.com/" + screenName + "/status/" + tweet_id,
+        "_blank"
+      ); // https://stackoverflow.com/questions/4907843/open-a-url-in-a-new-tab-and-not-a-new-window-using-javascript
+      win.focus();
     }
   },
   watch: {
@@ -71,6 +204,9 @@ export default {
       this.getAjax();
     },
     url: function() {
+      this.getAjax();
+    },
+    owner: function() {
       this.getAjax();
     }
   },
@@ -81,4 +217,7 @@ export default {
 </script>
 
 <style>
+.ignored {
+  text-decoration: line-through;
+}
 </style>
