@@ -121,6 +121,11 @@
                       </v-flex>
                     </v-layout>
                   </div>
+                  <v-flex xs2 offset-xs5>
+                    <v-btn fab color="red" dark small @click.native="s_un_done(tweet.id, id)">
+                      <v-icon>undo</v-icon>
+                    </v-btn>
+                  </v-flex>
                 </v-expansion-panel-content>
               </v-expansion-panel>
             </v-tab-item>
@@ -188,6 +193,13 @@ export default {
       // this.$delete(this.tweets, id);
       window.axios
         .post("tweets/update/done", { id: id })
+        .then(this.$delete(this.tweets, key))
+        .catch();
+    },
+    s_un_done: function(id, key) {
+      // this.$delete(this.tweets, id);
+      window.axios
+        .post("tweets/update/un_done", { id: id })
         .then(this.$delete(this.tweets, key))
         .catch();
     },
