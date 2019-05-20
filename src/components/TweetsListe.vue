@@ -103,6 +103,7 @@
                   <div slot="header">
                     <v-layout row wrap>
                       <v-flex xs8>
+                        <strong>{{ tweet.hashtag }}</strong> :
                         <span :class="[tweet.ignore ? 'ignored' : '']">{{ tweet.text }}</span>
                       </v-flex>
                       <v-flex xs4>
