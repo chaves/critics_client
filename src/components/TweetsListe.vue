@@ -5,6 +5,50 @@
         <v-select :items="items" prepend-icon="face" v-model="owner"></v-select>
       </v-flex>
 
+      <v-flex xs8 offset-xs2>
+        <v-layout row wrap>
+          <v-flex xs4>
+            <div class="column">
+              <doughnut-chart
+                :percent="critiques_sur_cent"
+                :visibleValue="true"
+                foregroundColor="red"
+                :strokeWidth="12"
+                :height="100"
+                :width="100"
+              />
+              <span>Critisism</span>
+            </div>
+          </v-flex>
+
+          <v-flex xs4>
+            <div class="column">
+              <doughnut-chart
+                :percent="constructive_sur_cent"
+                :visibleValue="true"
+                foregroundColor="green"
+                :strokeWidth="12"
+                :height="100"
+                :width="100"
+              />Constructive
+            </div>
+          </v-flex>
+          <v-flex xs4>
+            <div class="column">
+              <doughnut-chart
+                :percent="ignore_sur_cent"
+                :visibleValue="true"
+                foregroundColor="grey"
+                :strokeWidth="12"
+                :height="100"
+                :width="100"
+              />ignored
+            </div>
+          </v-flex>
+        </v-layout>
+      </v-flex>
+    </v-layout>
+    <v-layout row wrap>
       <v-flex>
         <v-tabs fixed-tabs>
           <v-tabs-slider></v-tabs-slider>
@@ -140,6 +184,7 @@
 
 <script>
 import paginationSources from "./parts/paginationSources";
+import DoughnutChart from "./parts/DoughnutChart";
 
 export default {
   data: () => ({
@@ -148,13 +193,39 @@ export default {
     tweets: [],
     regles: [],
     pagination: {},
+    stats: {},
     page: 1,
     row: null,
     items: ["All", "Abir", "Bruno", "Svitlana", "Yifei"]
   }),
-
+  computed: {
+    // un accesseur (getter) calculé
+    critiques_sur_cent: function() {
+      // `this` pointe sur l'instance vm
+      return Math.round(
+        (this.stats.critiques_nb_yes /
+          (this.stats.critiques_nb_yes + this.stats.critiques_nb_no)) *
+          100
+      );
+    },
+    constructive_sur_cent: function() {
+      return Math.round(
+        (this.stats.constructive_nb_yes /
+          (this.stats.constructive_nb_yes + this.stats.constructive_nb_no)) *
+          100
+      );
+    },
+    ignore_sur_cent: function() {
+      return Math.round(
+        (this.stats.ignore_nb_yes /
+          (this.stats.ignore_nb_yes + this.stats.ignore_nb_no)) *
+          100
+      );
+    }
+  },
   mounted() {
     this.getAjax();
+    this.getStats();
   },
   methods: {
     getData: function(data) {
@@ -167,10 +238,28 @@ export default {
       this.pagination = pagination;
       this.tweets = data.data;
     },
+    getStatsData: function(data) {
+      let stats = {
+        critiques_nb_yes: data.critiques_nb_yes,
+        critiques_nb_no: data.critiques_nb_no,
+
+        constructive_nb_yes: data.constructive_nb_yes,
+        constructive_nb_no: data.constructive_nb_no,
+
+        ignore_nb_yes: data.ignore_nb_yes,
+        ignore_nb_no: data.ignore_nb_no
+      };
+      this.stats = stats;
+    },
     getAjax: function() {
       window.axios
         .get(this.url + "/" + this.owner.toLowerCase() + "?page=" + this.page)
         .then(response => this.getData(response.data));
+    },
+    getStats: function() {
+      window.axios
+        .get("stats/" + this.owner.toLowerCase())
+        .then(response => this.getStatsData(response.data));
     },
     s_criticism: function(id, value) {
       window.axios
@@ -215,16 +304,20 @@ export default {
   watch: {
     page: function() {
       this.getAjax();
+      this.getStats();
     },
     url: function() {
       this.getAjax();
+      this.getStats();
     },
     owner: function() {
       this.getAjax();
+      this.getStats();
     }
   },
   components: {
-    "pagination-sources": paginationSources
+    "pagination-sources": paginationSources,
+    "doughnut-chart": DoughnutChart
   }
 };
 </script>
@@ -232,5 +325,8 @@ export default {
 <style>
 .ignored {
   text-decoration: line-through;
+}
+.column {
+  display: inline-flex;
 }
 </style>

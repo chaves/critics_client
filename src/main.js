@@ -1,6 +1,7 @@
 import Vue from "vue";
 import "./plugins/vuetify";
 import "./plugins/axios";
+import "./plugins/doughnut-chart";
 import App from "./App.vue";
 
 Vue.config.productionTip = false;
